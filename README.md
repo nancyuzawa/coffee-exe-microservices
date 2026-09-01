@@ -1,5 +1,5 @@
 # coffee-exe-microservices
-🌐 [[Português](README.pt-BR.md)
+🌐 [[Português](README.pt-BR.md)]
 
 <h1>Project: Coffee.exe</h1>
 <p>Description: Development of a practical project applying the concepts of microservices architecture, based on a tech coffee shop.</p>
