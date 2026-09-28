@@ -1,5 +1,5 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../config/database");
+import { DataTypes } from "sequelize";
+import sequelize from "../config/database.js";
 
 const Pedido = sequelize.define(
   "Pedido",
@@ -9,11 +9,21 @@ const Pedido = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
+    // --- quem fez o pedido (o CPF identifica o cliente; guardado só com dígitos) ---
+    nomeCliente: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    cpfCliente: {
+      type: DataTypes.STRING(11),
+      allowNull: false,
+    },
+    // referência lógica ao item do ms-cardapio (sem FOREIGN KEY: bancos separados)
     itemId: {
       type: DataTypes.UUID,
       allowNull: false,
     },
-    // --- campos de snapshot: copiados do cardápio no momento da compra ---
+    // --- snapshot: copiado do cardápio no momento da compra ---
     nomeItem: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -22,7 +32,7 @@ const Pedido = sequelize.define(
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
     },
-    // -----------------------------------------------------------------
+    // ------------------------------------------------------------
     quantidade: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -48,4 +58,4 @@ const Pedido = sequelize.define(
   }
 );
 
-module.exports = Pedido;
+export default Pedido;

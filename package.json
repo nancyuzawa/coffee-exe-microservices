@@ -1,0 +1,13 @@
+{
+  "name": "coffee-exe",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Coffee.exe - DSW3 - Arquitetura de Microsserviços",
+  "scripts": {
+    "install:all": "npm install --prefix ms-cardapio && npm install --prefix ms-pedidos && npm install --prefix frontend",
+    "dev": "concurrently -n cardapio,pedidos,frontend -c yellow,cyan,green \"npm run dev --prefix ms-cardapio\" \"npm run dev --prefix ms-pedidos\" \"npm start --prefix frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}
