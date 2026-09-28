@@ -1,9 +1,16 @@
-const express = require("express");
+import express from "express";
+import {
+  criarPedido,
+  listarPedidos,
+  buscarPedidoPorId,
+  cancelarPedido,
+} from "../controllers/pedidoController.js";
+
 const router = express.Router();
-const pedidoController = require("../controllers/pedidoController");
 
-router.post("/", pedidoController.criarPedido);
-router.get("/", pedidoController.listarPedidos);
-router.get("/:id", pedidoController.buscarPedidoPorId);
+router.post("/", criarPedido);
+router.get("/", listarPedidos);
+router.get("/:id", buscarPedidoPorId);
+router.patch("/:id/cancelar", cancelarPedido);
 
-module.exports = router;
+export default router;

@@ -5,13 +5,19 @@ const pedidosApi = axios.create({
   timeout: 5000,
 });
 
-export async function buscarPedidos() {
-  const resposta = await pedidosApi.get("/pedidos");
+// Sem CPF: todos os pedidos (admin). Com CPF: só os daquele cliente.
+export async function buscarPedidos(cpf) {
+  const resposta = await pedidosApi.get("/pedidos", { params: cpf ? { cpf } : {} });
   return resposta.data;
 }
 
-export async function criarPedido(itemId, quantidade) {
-  const resposta = await pedidosApi.post("/pedidos", { itemId, quantidade });
+export async function criarPedido({ itemId, quantidade, nomeCliente, cpf }) {
+  const resposta = await pedidosApi.post("/pedidos", { itemId, quantidade, nomeCliente, cpf });
+  return resposta.data;
+}
+
+export async function cancelarPedido(id) {
+  const resposta = await pedidosApi.patch(`/pedidos/${id}/cancelar`);
   return resposta.data;
 }
 
