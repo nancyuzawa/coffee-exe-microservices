@@ -2,10 +2,9 @@
      <img width="362" height="272" alt="hero-banner" src="https://github.com/user-attachments/assets/2947d480-173d-4f8d-9327-c8c0fa5c95fe" />
  </p>
 
-## Projeto da disciplina **Desenvolvimento Web 3 ** — Arquitetura de Microsserviços.
+## Projeto da disciplina Desenvolvimento Web 3 | Arquitetura de Microsserviços.
 
 **Nome:** Nancy M. Yuzawa | CP3025641
-
 
 
 Aplicação de cafeteria com catálogo, carrinho, compras e avaliações. O frontend é desenvolvido em React, e o backend é dividido em serviços independentes com bancos MySQL próprios.
@@ -269,7 +268,4 @@ Para gerar a versão de produção, execute na pasta `frontend`:
 ```powershell
 npm run build
 ```
-
-## 12. Autoria
-
 
