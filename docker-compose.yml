@@ -1,0 +1,223 @@
+name: meow-coffee
+services:
+  mysql-produtos:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: meow_produtos
+      MYSQL_USER: meow_produtos
+      MYSQL_PASSWORD: ${PRODUTOS_DB_PASSWORD:-produtos_dev}
+      MYSQL_ROOT_PASSWORD: ${PRODUTOS_DB_ROOT_PASSWORD:-produtos_root_dev}
+    volumes:
+      - produtos-data:/var/lib/mysql
+    networks:
+      - produtos-data
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h 127.0.0.1 -u \"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+      start_period: 30s
+
+  mysql-pedidos:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: meow_pedidos
+      MYSQL_USER: meow_pedidos
+      MYSQL_PASSWORD: ${PEDIDOS_DB_PASSWORD:-pedidos_dev}
+      MYSQL_ROOT_PASSWORD: ${PEDIDOS_DB_ROOT_PASSWORD:-pedidos_root_dev}
+    volumes:
+      - pedidos-data:/var/lib/mysql
+    networks:
+      - pedidos-data
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h 127.0.0.1 -u \"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+      start_period: 30s
+
+  ms-produtos:
+    build: ./ms-produtos
+    restart: unless-stopped
+    environment:
+      EVENT_BUS_URL: http://event-bus:4005
+      PORT: 3001
+      DB_HOST: mysql-produtos
+      DB_PORT: 3306
+      DB_NAME: meow_produtos
+      DB_USER: meow_produtos
+      DB_PASSWORD: ${PRODUTOS_DB_PASSWORD:-produtos_dev}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${PRODUTOS_PORT:-3001}:3001"
+    depends_on:
+      mysql-produtos:
+        condition: service_healthy
+    networks:
+      - app
+      - produtos-data
+
+  ms-pedidos:
+    build: ./ms-pedidos
+    restart: unless-stopped
+    environment:
+      EVENT_BUS_URL: http://event-bus:4005
+      PORT: 3002
+      DB_HOST: mysql-pedidos
+      DB_PORT: 3306
+      DB_NAME: meow_pedidos
+      DB_USER: meow_pedidos
+      DB_PASSWORD: ${PEDIDOS_DB_PASSWORD:-pedidos_dev}
+      PRODUTOS_API_URL: http://ms-produtos:3001
+      PRODUTOS_TIMEOUT_MS: 2000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${PEDIDOS_PORT:-3002}:3002"
+    depends_on:
+      mysql-pedidos:
+        condition: service_healthy
+    networks:
+      - app
+      - pedidos-data
+
+  mysql-avaliacoes: &mysql-service
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: meow_avaliacoes
+      MYSQL_USER: meow_avaliacoes
+      MYSQL_PASSWORD: ${AVALIACOES_DB_PASSWORD:-avaliacoes_dev}
+      MYSQL_ROOT_PASSWORD: ${AVALIACOES_DB_ROOT_PASSWORD:-avaliacoes_root_dev}
+    volumes:
+      - avaliacoes-data:/var/lib/mysql
+    networks:
+      - avaliacoes-data
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_PASSWORD\" mysql --protocol=TCP -h 127.0.0.1 -u \"$$MYSQL_USER\" \"$$MYSQL_DATABASE\" -e 'SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+      start_period: 30s
+
+  ms-avaliacoes:
+    build: ./ms-avaliacoes
+    restart: unless-stopped
+    environment:
+      PORT: 3003
+      DB_HOST: mysql-avaliacoes
+      DB_PORT: 3306
+      DB_NAME: meow_avaliacoes
+      DB_USER: meow_avaliacoes
+      DB_PASSWORD: ${AVALIACOES_DB_PASSWORD:-avaliacoes_dev}
+      PRODUTOS_API_URL: http://ms-produtos:3001
+      PRODUTOS_TIMEOUT_MS: 2000
+      EVENT_BUS_URL: http://event-bus:4005
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${AVALIACOES_PORT:-3003}:3003"
+    depends_on:
+      mysql-avaliacoes:
+        condition: service_healthy
+    networks:
+      - app
+      - avaliacoes-data
+
+  mysql-eventos:
+    <<: *mysql-service
+    environment:
+      MYSQL_DATABASE: meow_eventos
+      MYSQL_USER: meow_eventos
+      MYSQL_PASSWORD: ${EVENTOS_DB_PASSWORD:-eventos_dev}
+      MYSQL_ROOT_PASSWORD: ${EVENTOS_DB_ROOT_PASSWORD:-eventos_root_dev}
+    volumes:
+      - eventos-data:/var/lib/mysql
+    networks:
+      - eventos-data
+
+  mysql-query:
+    <<: *mysql-service
+    environment:
+      MYSQL_DATABASE: meow_query
+      MYSQL_USER: meow_query
+      MYSQL_PASSWORD: ${QUERY_DB_PASSWORD:-query_dev}
+      MYSQL_ROOT_PASSWORD: ${QUERY_DB_ROOT_PASSWORD:-query_root_dev}
+    volumes:
+      - query-data:/var/lib/mysql
+    networks:
+      - query-data
+
+  event-bus:
+    build: ./event-bus
+    restart: unless-stopped
+    environment:
+      PORT: 4005
+      DB_HOST: mysql-eventos
+      DB_NAME: meow_eventos
+      DB_USER: meow_eventos
+      DB_PASSWORD: ${EVENTOS_DB_PASSWORD:-eventos_dev}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${EVENT_BUS_PORT:-4005}:4005"
+    depends_on:
+      mysql-eventos:
+        condition: service_healthy
+    networks:
+      - app
+      - eventos-data
+
+  ms-query:
+    build: ./ms-query
+    restart: unless-stopped
+    environment:
+      PORT: 3004
+      DB_HOST: mysql-query
+      DB_NAME: meow_query
+      DB_USER: meow_query
+      DB_PASSWORD: ${QUERY_DB_PASSWORD:-query_dev}
+      EVENT_BUS_URL: http://event-bus:4005
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080,http://localhost:5173,http://127.0.0.1:5173}
+    ports:
+      - "${QUERY_PORT:-3004}:3004"
+    depends_on:
+      mysql-query:
+        condition: service_healthy
+    networks:
+      - app
+      - query-data
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_PRODUTOS_API_URL: /api/catalogo
+        VITE_PEDIDOS_API_URL: /api/compras
+        VITE_AVALIACOES_API_URL: /api/opinioes
+        VITE_QUERY_API_URL: /api/consulta
+        VITE_EVENT_BUS_API_URL: /api/eventos
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    networks:
+      - app
+
+volumes:
+  produtos-data:
+  pedidos-data:
+  avaliacoes-data:
+  eventos-data:
+  query-data:
+
+networks:
+  app:
+  produtos-data:
+    internal: true
+  pedidos-data:
+    internal: true
+  avaliacoes-data:
+    internal: true
+  eventos-data:
+    internal: true
+  query-data:
+    internal: true
