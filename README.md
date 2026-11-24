@@ -1,219 +1,271 @@
-# ☕ Coffee.exe
+ <p align="center">
+     <img width="362" height="272" alt="hero-banner" src="https://github.com/user-attachments/assets/2947d480-173d-4f8d-9327-c8c0fa5c95fe" />
+ </p>
 
-Projeto da disciplina **Desenvolvimento Web 3 (DSW3)** — Arquitetura de Microsserviços.
+## Projeto da disciplina Desenvolvimento Web 3 | Arquitetura de Microsserviços.
 
-**Descrição:** Desenvolvimento de um projeto prático aplicando os conceitos da arquitetura de microsserviços com a temática de uma **Cafeteria Tech**.
+**Nome:** Nancy M. Yuzawa | CP3025641
 
-A aplicação é composta por dois microsserviços de backend independentes (**Cardápio** e **Pedidos**) e um frontend único desenvolvido em React.
+
+Aplicação de cafeteria com catálogo, carrinho, compras e avaliações. O frontend é desenvolvido em React, e o backend é dividido em serviços independentes com bancos MySQL próprios.
 
 ## 1. Sobre o projeto
 
-O sistema simula os pedidos de uma cafeteria e é composto por **dois microsserviços de backend independentes** e um **frontend em React** que os consome. A especificação da disciplina define os serviços genericamente como *Produtos* e *Pedidos*; neste repositório eles foram adaptados ao tema da aplicação, mantendo exatamente as mesmas responsabilidades e regras de negócio pedidas:
+Produtos e Pedidos correspondem aos domínios principais do enunciado. Avaliações, Event Bus e Query ampliam a aplicação com comunicação assíncrona, filas persistentes e cópias dos dados para consulta.
 
-| Papel no enunciado da disciplina | Neste repositório     | Pasta         | Porta padrão |
-|-----------------------------------|------------------------|---------------|:------------:|
-| Microsserviço 1 — **Produtos**    | Cardápio (`ms-cardapio`) | `/ms-cardapio` | 3001         |
-| Microsserviço 2 — **Pedidos**     | Pedidos (`ms-pedidos`)   | `/ms-pedidos`  | 3002         |
-| Frontend (React)                  | Frontend (`frontend`)   | `/frontend`   | 3000         |
+| Componente | Pasta | Responsabilidade | Porta padrão |
+| --- | --- | --- | --- |
+| Produtos | `ms-produtos/` | Gerenciar o catálogo e publicar alterações | 3001 |
+| Pedidos | `ms-pedidos/` | Processar compras e preservar snapshots | 3002 |
+| Avaliações | `ms-avaliacoes/` | Processar notas e comentários | 3003 |
+| Query | `ms-query/` | Consultar cópias de produtos, pedidos e avaliações | 3004 |
+| Event Bus | `event-bus/` | Persistir eventos e solicitações pendentes | 4005 |
+| Frontend | `frontend/` | Interface React servida pelo Nginx no Docker | 8080 |
 
-Ou seja: "produto" do enunciado = "item do cardápio" aqui (mesma entidade, mesmos campos e mesmas validações).
-
-## 2. Arquitetura (Momento 1 · item 1)
+## 2. Arquitetura
 
 ```mermaid
 flowchart LR
-    FE["Frontend React\n:3000"]
-    MC["ms-cardapio (Produtos)\nNode + Express\n:3001"]
-    MP["ms-pedidos\nNode + Express\n:3002"]
-    DBC[("MySQL\ncoffee_cardapio")]
-    DBP[("MySQL\ncoffee_pedidos")]
-
-    FE -->|"CRUD /cardapio"| MC
-    FE -->|"POST/GET/PATCH /pedidos"| MP
-    MP -.->|"1) GET /cardapio/:id\n(valida + snapshot)"| MC
-    MP -.->|"2) PATCH /cardapio/:id/estoque\n(baixa/repõe)"| MC
-    MC --> DBC
-    MP --> DBP
+    FE[Frontend React] -->|Consultas| Q[Query :3004]
+    FE -->|Solicitações de compras e avaliações| E[Event Bus :4005]
+    P[Produtos :3001] -->|Eventos via outbox| E
+    O[Pedidos :3002] -->|Consome compras pendentes| E
+    A[Avaliações :3003] -->|Consome avaliações pendentes| E
+    O -->|Validação HTTP e snapshot| P
+    A -->|Validação HTTP| P
+    O -->|Eventos via outbox| E
+    A -->|Eventos via outbox| E
+    Q -->|Consome histórico de eventos| E
+    P --> DP[(MySQL Produtos)]
+    O --> DO[(MySQL Pedidos)]
+    A --> DA[(MySQL Avaliações)]
+    E --> DE[(MySQL Eventos)]
+    Q --> DQ[(MySQL Query)]
 ```
 
-Pontos-chave da arquitetura:
+- **Bancos independentes:** cada serviço possui banco, usuário, rede de dados e volume próprios. Não há acesso direto ao banco de outro serviço nem chaves estrangeiras entre bancos.
+- **Comunicação síncrona:** Pedidos consulta Produtos por HTTP para validar os itens e obter nome e preço. Avaliações também valida a existência do produto por HTTP.
+- **Comunicação assíncrona:** os serviços publicam eventos no Event Bus, e o Query consome o histórico para atualizar suas cópias persistentes.
+- **Outbox transacional:** a alteração e seu evento são salvos na mesma transação local. Eventos pendentes são reenviados quando o barramento volta.
+- **Consistência eventual:** publicadores e consumidores executam em intervalos de 2 segundos. As alterações podem levar alguns segundos para aparecer no Query; o frontend atualiza catálogo e histórico a cada 5 segundos.
 
-- **Cada microsserviço é dono do seu próprio banco.** Não existe *foreign key* de `pedidos.itemId` para o banco do cardápio — a relação é apenas lógica e é validada em tempo de execução via chamada HTTP.
-- **Comunicação síncrona service-to-service:** ao criar um pedido, o `ms-pedidos` consulta o `ms-cardapio` para validar o item e obter os dados atuais antes de gravar qualquer coisa.
-- **Snapshot Pattern:** o pedido grava `nomeItem` e `precoUnitario` no momento da compra, de modo que uma alteração futura de preço no cardápio não reescreve o histórico financeiro.
+Mais detalhes em [docs/arquitetura.md](docs/arquitetura.md).
 
 ## 3. Estrutura do repositório
 
-```
-coffee-exe/
-├── ms-cardapio/          # microsserviço "Produtos" da especificação
-│   ├── database/          # schema.sql e seed.sql
-│   └── src/                # config, models, controllers, routes
-├── ms-pedidos/            # microsserviço "Pedidos"
-│   ├── database/
-│   └── src/                # inclui src/services/cardapioService.js (chamada HTTP ao cardápio)
-├── frontend/               # aplicação React (escopo dos Momentos 3 e 4)
-├── docs/
-│   └── coffee-exe.postman_collection.json
-└── README.md
+```text
+ms-produtos/        API do catálogo, modelos, migrations e publicação de eventos
+ms-pedidos/         API de compras, consumidor da fila, snapshots e eventos
+ms-avaliacoes/      API de avaliações, consumidor da fila e eventos
+event-bus/         Histórico de eventos e filas persistentes de solicitações
+ms-query/          Projeções e consultas de produtos, pedidos e avaliações
+frontend/          Interface React, estilos, imagens e configuração Nginx
+docs/              Arquitetura e coleção do Postman
+docker-compose.yml Serviços, bancos, redes e volumes
+verify-query.mjs    Verificação de integração e recuperação após falhas
+README.md          Instruções do projeto
 ```
 
 ## 4. Tecnologias utilizadas
 
-- **Node.js 18+** com **Express** nos dois microsserviços;
-- **Sequelize** (ORM) + **mysql2** sobre **MySQL 8**, um banco por serviço;
-- **Axios** para a comunicação HTTP entre `ms-pedidos` e `ms-cardapio`;
-- **React** (Create React App) no frontend — presente no repositório, mas fora do escopo avaliado nos Momentos 1 e 2.
+- **Node.js 22+** e **Express** nas APIs.
+- **Sequelize**, **mysql2** e **MySQL 8.4** para persistência.
+- **Umzug** para migrations versionadas.
+- **React**, **Vite** e **Axios** no frontend.
+- **Fetch** nas integrações HTTP entre serviços.
+- **Docker Compose** para execução conjunta e **Nginx** para servir o frontend e encaminhar chamadas às APIs.
 
-## 5. Pré-requisitos
+## 5. Pré-requisitos e execução com Docker
 
-- Node.js 18 ou superior;
-- MySQL 8.0.16 ou superior rodando localmente (os scripts usam `CHECK constraints`, que exigem essa versão);
-- Postman ou Insomnia, para importar a coleção de testes da API.
+Tenha o Docker Desktop iniciado, usando contêineres Linux. Não é necessário instalar Node.js ou MySQL no computador para executar pelo Docker.
 
-## 6. Configuração do banco de dados (Momento 1 · item 4)
+Na raiz do repositório:
 
-Cada serviço tem seu próprio schema. Execute uma vez cada script:
-
-```bash
-mysql -u root -p < ms-cardapio/database/schema.sql
-mysql -u root -p < ms-pedidos/database/schema.sql
+```powershell
+docker compose up --build -d
 ```
 
-Isso cria os bancos `coffee_cardapio` e `coffee_pedidos` e as respectivas tabelas (`itens_cardapio` e `pedidos`), já com as constraints de integridade (preço/estoque não-negativos, quantidade positiva, enum de status, índices por CPF/status/item).
+Acesse **http://localhost:8080**. Aguarde os bancos iniciarem, as migrations serem aplicadas e o Query concluir a sincronização inicial. O catálogo de uma instalação nova começa vazio: cadastre produtos pela API ou pelo Postman.
 
-Para popular o cardápio com itens de exemplo (opcional, útil para testar/apresentar):
+Para acompanhar os serviços:
 
-```bash
-mysql -u root -p < ms-cardapio/database/seed.sql
-# ou, após instalar as dependências do serviço:
-npm run seed --prefix ms-cardapio
+```powershell
+docker compose ps
+docker compose logs -f
 ```
 
-> Observação: cada serviço também tenta criar o banco e sincronizar as tabelas sozinho ao subir (via `sequelize.sync()`), mas os arquivos em `database/schema.sql` são a versão de referência para conferência da modelagem.
+Para encerrar preservando os bancos:
 
-## 7. Variáveis de ambiente
-
-Copie os arquivos de exemplo e ajuste usuário/senha do MySQL local:
-
-```bash
-cp ms-cardapio/.env.example ms-cardapio/.env
-cp ms-pedidos/.env.example ms-pedidos/.env
+```powershell
+docker compose down
 ```
 
-`ms-cardapio/.env`
-```
-PORT=3001
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=coffee_cardapio
-DB_USER=root
-DB_PASSWORD=sua_senha_aqui
-```
+**Não utilize a opção `-v` para um encerramento comum:** ela remove os volumes e seus dados.
 
-`ms-pedidos/.env`
-```
-PORT=3002
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=coffee_pedidos
-DB_USER=root
-DB_PASSWORD=sua_senha_aqui
+## 6. Configuração e persistência
 
-# URL usada na comunicação service-to-service com o ms-cardapio
-CARDAPIO_SERVICE_URL=http://localhost:3001
+Para personalizar portas e senhas do Docker, copie o exemplo antes de iniciar e ajuste os valores:
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-## 8. Como executar os microsserviços (Momento 1 · item 2)
+O Compose configura cinco bancos: `meow_produtos`, `meow_pedidos`, `meow_avaliacoes`, `meow_eventos` e `meow_query`. Cada um utiliza um volume persistente separado.
 
-**Opção A — a partir da raiz do repositório**, instalando e subindo tudo de uma vez:
+As tabelas são criadas por migrations registradas na tabela `SequelizeMeta` de cada banco. Não é necessário executar scripts SQL manualmente. As migrations de adoção dos eventos incluem produtos, pedidos e avaliações preexistentes na outbox para sincronização com o Query.
 
-```bash
-npm run install:all   # instala ms-cardapio, ms-pedidos e frontend
-npm run dev           # sobe os dois microsserviços (e o frontend) em paralelo
+As APIs oferecem `GET /health` para verificar o processo e `GET /ready` para verificar sua prontidão. No Query, a prontidão também considera a sincronização inicial.
+
+## 7. Principais endpoints
+
+| Serviço / porta | Método | Rota | Função |
+| --- | --- | --- | --- |
+| Produtos / 3001 | POST | `/produtos` | Cadastrar produto |
+| Produtos / 3001 | GET | `/produtos` e `/produtos/:id` | Listar e consultar produtos na origem |
+| Produtos / 3001 | PUT | `/produtos/:id` | Atualizar produto |
+| Produtos / 3001 | DELETE | `/produtos/:id` | Excluir produto |
+| Pedidos / 3002 | POST | `/pedidos` | Criar diretamente uma compra com validação e snapshot |
+| Pedidos / 3002 | GET | `/pedidos` e `/pedidos/:id` | Listar e consultar compras na origem |
+| Avaliações / 3003 | POST | `/avaliacoes` | Criar diretamente uma avaliação |
+| Avaliações / 3003 | GET | `/avaliacoes?produtoId=UUID` | Listar avaliações de um produto |
+| Avaliações / 3003 | GET | `/avaliacoes/media/:produtoId` | Consultar média e total |
+| Query / 3004 | GET | `/produtos` e `/produtos/:id` | Consultar a projeção do catálogo |
+| Query / 3004 | GET | `/pedidos` e `/pedidos/:id` | Consultar a projeção das compras |
+| Query / 3004 | GET | `/avaliacoes?produtoId=UUID` | Consultar avaliações projetadas |
+| Query / 3004 | GET | `/avaliacoes/media/:produtoId` | Consultar média e total projetados |
+| Event Bus / 4005 | POST | `/events` | Receber eventos dos serviços |
+| Event Bus / 4005 | GET | `/events?after=0&limit=100` | Consultar eventos por cursor para sincronização e replay |
+| Event Bus / 4005 | POST | `/order-requests` | Receber uma solicitação de compra |
+| Event Bus / 4005 | GET | `/order-requests` | Consultar solicitações de compra |
+| Event Bus / 4005 | POST | `/order-requests/:id/retry` | Recolocar uma compra rejeitada na fila |
+| Event Bus / 4005 | POST | `/order-requests/:id/remove` | Remover uma solicitação rejeitada |
+| Event Bus / 4005 | POST | `/review-requests` | Receber uma solicitação de avaliação |
+| Event Bus / 4005 | GET | `/review-requests?produtoId=UUID` | Consultar solicitações de avaliação por produto |
+
+Os consumidores também utilizam rotas internas de confirmação de processamento: `POST /order-requests/:id/ack` e `POST /review-requests/:id/ack`.
+
+O produto possui `id`, `nome`, `preco`, `descricao` e datas de criação e atualização. **A implementação atual não possui controle de estoque.**
+
+## 8. Fluxo de compra e Snapshot Pattern
+
+1. O cliente consulta o catálogo pelo Query e adiciona produtos ao carrinho.
+2. O frontend envia os itens e um `requestId` ao Event Bus em `POST /order-requests`.
+3. O barramento salva a solicitação no MySQL e responde **HTTP 202**, confirmando recebimento, ainda não a realização da compra.
+4. O consumidor de Pedidos busca solicitações pendentes e aciona o processamento.
+5. Pedidos consulta Produtos por HTTP e obtém o nome e o preço atuais de cada item.
+6. Cabeçalho, itens e evento são salvos na mesma transação local. O consumidor confirma o processamento da solicitação.
+7. O evento chega ao Query, que atualiza o histórico exibido pelo frontend.
+
+Cada compra possui cabeçalho em `pedidos` e itens em `pedido_itens`. Cada item guarda `nomeProduto`, `precoUnitario`, `quantidade` e `valorTotal`. O **Snapshot Pattern** preserva esses dados mesmo se o catálogo mudar ou o produto for excluído.
+
+O total é calculado em centavos e persistido como `DECIMAL`. A data é gerada pelo servidor em UTC. Produtos repetidos devem ter as quantidades somadas no carrinho; a API rejeita itens duplicados.
+
+O `requestId` protege contra duplicação em reenvios. No `POST /pedidos`, reenviar o mesmo identificador com os mesmos itens recupera a compra existente com HTTP 200; itens diferentes com o mesmo identificador retornam HTTP 409.
+
+## 9. Frontend e tolerância a falhas
+
+O frontend possui catálogo, carrinho, histórico e avaliações, com validações de entrada, estados de carregamento e mensagens de erro.
+
+Catálogo e histórico são consultados no **Query**, sem depender de cópias no `localStorage`. Compras e avaliações pendentes ficam no **MySQL do Event Bus** e podem ser processadas mesmo com o navegador fechado.
+
+O carrinho ainda não enviado fica apenas na memória da página e é perdido ao recarregá-la. Se o Event Bus não confirmar o recebimento, a interface mantém o carrinho na página e apresenta erro. Não há importação automática de filas antigas do `localStorage`.
+
+| Serviço indisponível | Comportamento esperado |
+| --- | --- |
+| Produtos | Query mantém as leituras sincronizadas; novas compras aguardam validação na fila |
+| Pedidos | Query mantém o histórico; o Event Bus continua recebendo compras |
+| Avaliações | Query mantém as avaliações sincronizadas; novas solicitações aguardam processamento |
+| Event Bus | Novas solicitações não podem ser confirmadas; eventos não publicados permanecem nas outboxes |
+| Query ou seu banco | As consultas do frontend ficam indisponíveis; não há fallback persistente no navegador |
+
+Falhas temporárias mantêm solicitações pendentes. Erros de validação deixam compras aguardando revisão, com opções para tentar novamente ou remover da fila.
+
+O histórico e as solicitações são globais, sem autenticação ou separação por cliente. O modelo de pedido admite `CANCELADO`, mas não há endpoint de cancelamento.
+
+## 10. Documentação e testes das APIs
+
+A coleção está em [docs/meow-coffee.postman_collection.json](docs/meow-coffee.postman_collection.json).
+
+No Postman, utilize **Import → File** e selecione a coleção. Ajuste as variáveis de URL e copie o UUID de um produto cadastrado para `produtoId`. Troque identificadores de solicitação ao iniciar compras ou avaliações diferentes.
+
+Exemplo de cadastro com `POST http://localhost:3001/produtos`:
+
+```json
+{
+  "nome": "Espresso da Casa",
+  "preco": 12.50,
+  "descricao": "Café 100% arábica."
+}
 ```
 
-**Opção B — cada serviço individualmente** (recomendado para focar apenas no backend nesta entrega):
+Exemplo de solicitação com `POST http://localhost:4005/order-requests`:
 
-```bash
-# terminal 1
-cd ms-cardapio
-npm install
+```json
+{
+  "requestId": "SUBSTITUA-POR-UM-NOVO-UUID",
+  "itens": [
+    {
+      "produtoId": "SUBSTITUA-PELO-UUID-DO-PRODUTO",
+      "quantidade": 2
+    }
+  ]
+}
+```
+
+Para criar diretamente pela API de Pedidos, envie o mesmo formato a `POST http://localhost:3002/pedidos`. Essa chamada exige que Produtos esteja disponível naquele momento.
+
+### Demonstração de falhas
+
+Com o catálogo e o histórico já sincronizados, pare Pedidos:
+
+```powershell
+docker compose stop ms-pedidos
+```
+
+Confira as consultas e envie uma compra pela interface. Ela deve aparecer como pendente. Reinicie o serviço e acompanhe a atualização do histórico:
+
+```powershell
+docker compose start ms-pedidos
+```
+
+O mesmo teste pode ser realizado com `ms-produtos`. Restaure o serviço ao terminar.
+
+### Verificação de integração
+
+Com Node.js instalado, Docker disponível e serviços iniciados:
+
+```powershell
+node verify-query.mjs
+```
+
+O teste verifica sincronização, alterações e exclusões do catálogo, consultas durante quedas, persistência da fila após reinício, prevenção de duplicação, snapshot e persistência do Query. Ele interrompe e restaura serviços locais, remove o produto temporário e deixa uma compra de teste no histórico.
+
+## 11. Desenvolvimento local sem Docker
+
+Requer **Node.js 22+** e cinco bancos MySQL separados já criados. Em cada pasta de backend (`ms-produtos`, `ms-pedidos`, `ms-avaliacoes`, `event-bus` e `ms-query`), copie o exemplo, ajuste as credenciais e execute em terminais separados:
+
+```powershell
+Copy-Item .env.example .env
+npm ci
 npm run dev
+```
 
-# terminal 2
-cd ms-pedidos
-npm install
+Configure `EVENT_BUS_URL` nos serviços que publicam ou consomem eventos. Em Pedidos e Avaliações, configure também `PRODUTOS_API_URL` e, quando necessário, `PRODUTOS_TIMEOUT_MS`. Use `localhost` com as portas da tabela inicial. `CORS_ORIGINS` define as origens permitidas.
+
+No frontend:
+
+```powershell
+cd frontend
+Copy-Item .env.example .env
+npm ci
 npm run dev
 ```
 
-Ao subir corretamente, cada serviço expõe uma rota de status:
+As variáveis `VITE_QUERY_API_URL` e `VITE_EVENT_BUS_API_URL` configuram as consultas e o envio de solicitações. No Docker, o Nginx encaminha as chamadas pela mesma origem.
 
+Para gerar a versão de produção, execute na pasta `frontend`:
+
+```powershell
+npm run build
 ```
-GET http://localhost:3001/  ->  { "servico": "ms-cardapio", "status": "online" }
-GET http://localhost:3002/  ->  { "servico": "ms-pedidos",  "status": "online" }
-```
 
-## 9. Endpoints estruturados (Momento 1 · item 2)
-
-### 9.1. `ms-cardapio` (Produtos) — base `http://localhost:3001/cardapio`
-
-| Método | Rota                | Descrição                                             |
-|--------|----------------------|--------------------------------------------------------|
-| POST   | `/cardapio`          | Cadastra um novo item (nome, preço, descrição, estoque) |
-| GET    | `/cardapio`          | Lista todos os itens cadastrados                        |
-| GET    | `/cardapio/:id`      | Busca os detalhes de um item específico                 |
-| PUT    | `/cardapio/:id`      | Atualiza um item existente                               |
-| DELETE | `/cardapio/:id`      | Remove um item                                           |
-| PATCH  | `/cardapio/:id/estoque` | Ajusta o estoque por delta (uso interno do `ms-pedidos`) |
-
-**Entidade Item (Produto):** `id` (UUID), `nome` (string), `preco` (decimal ≥ 0), `descricao` (string, opcional), `estoque` (inteiro ≥ 0).
-
-### 9.2. `ms-pedidos` — base `http://localhost:3002/pedidos`
-
-| Método | Rota                     | Descrição                                                |
-|--------|---------------------------|-------------------------------------------------------------|
-| POST   | `/pedidos`                | Cria um novo pedido (valida e faz snapshot no cardápio)      |
-| GET    | `/pedidos`                | Lista todos os pedidos                                        |
-| GET    | `/pedidos?cpf=...`        | Lista somente os pedidos daquele CPF                          |
-| GET    | `/pedidos/:id`            | Busca os detalhes de um pedido                                |
-| PATCH  | `/pedidos/:id/cancelar`   | Cancela o pedido e devolve a quantidade ao estoque do cardápio |
-
-**Entidade Pedido:** `id` (UUID), `nomeCliente`, `cpfCliente`, `itemId` (referência lógica ao produto), `nomeItem` (snapshot), `precoUnitario` (snapshot), `quantidade`, `valorTotal`, `dataPedido` (automática), `status` (`REALIZADO` | `CANCELADO`).
-
-## 10. Comunicação service-to-service e Snapshot Pattern (Momento 2 · item 2)
-
-Ao receber `POST /pedidos`, o `ms-pedidos` executa, nesta ordem:
-
-1. **Validação local do payload** (`itemId`, `quantidade` inteira > 0, `nomeCliente` com ao menos 3 caracteres, `cpf` válido).
-2. **`GET /cardapio/:itemId` no `ms-cardapio`** — confirma que o produto existe (`404` se não existir ou se o serviço estiver fora do ar) e obtém o **snapshot** atual de nome, preço e estoque.
-3. **Verificação de estoque** — se a quantidade pedida for maior que o estoque disponível, retorna `400` sem gravar nada.
-4. **`PATCH /cardapio/:itemId/estoque` com delta negativo** — baixa o estoque no `ms-cardapio` de forma atômica (transação com *row lock*), evitando que dois pedidos simultâneos consumam a mesma unidade em estoque; se o estoque acabou de ficar insuficiente entre os passos 2 e 4, o cardápio recusa com `409` e o pedido não é criado.
-5. **Gravação do pedido** com `nomeItem` e `precoUnitario` fixados como snapshot — preservando o histórico financeiro mesmo que o preço do produto mude depois.
-6. **Compensação:** se a gravação do pedido falhar após o estoque já ter sido baixado, o `ms-pedidos` chama novamente o `ms-cardapio` para repor a quantidade (não há transação distribuída entre os dois bancos, então essa é a forma de manter a consistência).
-
-O cancelamento (`PATCH /pedidos/:id/cancelar`) faz o caminho inverso: repõe o estoque no cardápio e só então marca o pedido como `CANCELADO`.
-
-**Resiliência:** se o `ms-cardapio` estiver fora do ar ou não responder a tempo, o `ms-pedidos` não quebra — ele responde `503` com uma mensagem amigável, sem deixar o pedido em estado inconsistente.
-
-## 11. Documentação e testes das APIs (Momento 1 · item 3 / Momento 2 · item 4)
-
-A coleção do Postman está em [`docs/coffee-exe.postman_collection.json`](./docs/coffee-exe.postman_collection.json), já com variáveis de ambiente (`cardapio_url`, `pedidos_url`, `itemId`, `pedidoId`, `nomeCliente`, `cpf`) e payloads de exemplo prontos.
-
-Para importar: **Postman → Import → File** e selecione o arquivo acima.
-
-A coleção está organizada em pastas, pensada para ser executada nesta ordem durante a apresentação prática:
-
-1. **Cardápio (`ms-cardapio :3001`)** — criar, listar, buscar, atualizar e ajustar estoque de um item;
-2. **Pedidos (`ms-pedidos :3002`)** — criar pedido, listar todos, listar por CPF, buscar por id, cancelar;
-3. **Cenários de erro** — inclui, entre outros: pedido de produto inexistente (`404`), pedido sem estoque suficiente (`400`), quantidade zero/negativa (`400`), CPF inválido (`400`), cancelar pedido já cancelado (`409`);
-4. **Resiliência** — derrubar o `ms-cardapio` e confirmar que a criação de pedido responde `503` de forma amigável, enquanto a listagem de pedidos continua funcionando normalmente;
-5. **Limpeza** — remoção do item de teste criado na pasta 1.
-
-## 12. Frontend
-
-O diretório `/frontend` já contém uma aplicação React funcional que consome os dois microsserviços (catálogo, pedido, histórico e painéis administrativos), útil para testes ponta a ponta durante o desenvolvimento. Sua entrega formal, no entanto, corresponde aos **Momentos 3 e 4** do cronograma da disciplina, não sendo o foco desta entrega.
-
-## 13. Autoria
-
-**Nome:** _Nancy M. Yuzawa_

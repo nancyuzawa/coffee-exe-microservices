@@ -1,0 +1,1464 @@
+{
+  "info": {
+    "name": "Meow Coffee - Documentação das APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Rotas e payloads do projeto. Inicie com docker compose up -d. Em Variables, copie o id de um produto listado para produtoId; copie os IDs retornados para pedidoId e avaliacaoId. requestId e solicitacaoId são UUIDs estáveis para reenvios: troque-os ao iniciar outra compra ou avaliação. A pasta Event Bus contém também rotas internas de consumo e publicação; o frontend envia avaliações por /review-requests e lê pelo Query. Os exemplos de resposta são ilustrativos e não executam requisições."
+  },
+  "variable": [
+    {
+      "key": "produtosUrl",
+      "type": "string",
+      "value": "http://localhost:3001"
+    },
+    {
+      "key": "pedidosUrl",
+      "type": "string",
+      "value": "http://localhost:3002"
+    },
+    {
+      "key": "avaliacoesUrl",
+      "type": "string",
+      "value": "http://localhost:3003"
+    },
+    {
+      "key": "queryUrl",
+      "type": "string",
+      "value": "http://localhost:3004"
+    },
+    {
+      "key": "eventBusUrl",
+      "type": "string",
+      "value": "http://localhost:4005"
+    },
+    {
+      "key": "produtoId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "pedidoId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "avaliacaoId",
+      "type": "string",
+      "value": ""
+    },
+    {
+      "key": "requestId",
+      "type": "string",
+      "value": "c3c9034d-4fe7-4be7-8de2-e2ca3cd0fd59"
+    },
+    {
+      "key": "solicitacaoId",
+      "type": "string",
+      "value": "8304eb3a-43f7-4311-b07c-d5b983a22d29"
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Produtos",
+      "item": [
+        {
+          "name": "Listar produtos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/produtos",
+            "description": "Copie um id da resposta para a variável produtoId."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/produtos",
+                "description": "Copie um id da resposta para a variável produtoId."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"{{produtoId}}\",\n    \"nome\": \"Espresso da Casa\",\n    \"preco\": 12.5,\n    \"descricao\": \"Café 100% arábica.\",\n    \"createdAt\": \"2026-11-23T12:00:00.000Z\",\n    \"updatedAt\": \"2026-11-23T12:00:00.000Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Cadastrar produto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/produtos",
+            "description": "Campos obrigatórios: nome (até 150), preco (até duas casas), descricao (até 5000). Retorna 201; dados inválidos retornam 400.",
+            "body": {
+              "raw": "{\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/produtos",
+                "description": "Campos obrigatórios: nome (até 150), preco (até duas casas), descricao (até 5000). Retorna 201; dados inválidos retornam 400.",
+                "body": {
+                  "raw": "{\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{produtoId}}\",\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\",\n  \"createdAt\": \"2026-11-23T12:00:00.000Z\",\n  \"updatedAt\": \"2026-11-23T12:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar produto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/produtos/{{produtoId}}",
+            "description": "UUID obrigatório. Retorna 404 se não existir."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/produtos/{{produtoId}}",
+                "description": "UUID obrigatório. Retorna 404 se não existir."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{produtoId}}\",\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\",\n  \"createdAt\": \"2026-11-23T12:00:00.000Z\",\n  \"updatedAt\": \"2026-11-23T12:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Atualizar produto",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/produtos/{{produtoId}}",
+            "description": "Envie todos os campos obrigatórios. Atualiza o produto indicado; 404 se não existir.",
+            "body": {
+              "raw": "{\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/produtos/{{produtoId}}",
+                "description": "Envie todos os campos obrigatórios. Atualiza o produto indicado; 404 se não existir.",
+                "body": {
+                  "raw": "{\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{produtoId}}\",\n  \"nome\": \"Espresso da Casa\",\n  \"preco\": 12.5,\n  \"descricao\": \"Café 100% arábica.\",\n  \"createdAt\": \"2026-11-23T12:00:00.000Z\",\n  \"updatedAt\": \"2026-11-23T12:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Excluir produto",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/produtos/{{produtoId}}",
+            "description": "Exclui o produto selecionado; não modifica os snapshots de compras anteriores. Sucesso sem corpo (204)."
+          },
+          "response": [
+            {
+              "name": "204 - Exemplo",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/produtos/{{produtoId}}",
+                "description": "Exclui o produto selecionado; não modifica os snapshots de compras anteriores. Sucesso sem corpo (204)."
+              },
+              "status": "No Content",
+              "code": 204,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "Saúde do processo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/health",
+            "description": "Retorna 200 se o processo estiver ativo."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/health",
+                "description": "Retorna 200 se o processo estiver ativo."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"UP\",\n  \"service\": \"ms-produtos\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Prontidão",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{produtosUrl}}/ready",
+            "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{produtosUrl}}/ready",
+                "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"READY\",\n  \"service\": \"ms-produtos\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Pedidos",
+      "item": [
+        {
+          "name": "Criar pedido",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{pedidosUrl}}/pedidos",
+            "description": "Informe de 1 a 100 itens, sem produto repetido. Quantidade inteira de 1 a 1000000. Produtos são validados por HTTP. Nome, preço e total são calculados no servidor. requestId é opcional: reutilize-o com os mesmos itens para recuperar a mesma compra (200); com itens diferentes retorna 409. Novo pedido retorna 201. Produto inexistente: 404; serviço indisponível: 503.",
+            "body": {
+              "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"itens\": [\n    {\n      \"produtoId\": \"{{produtoId}}\",\n      \"quantidade\": 2\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{pedidosUrl}}/pedidos",
+                "description": "Informe de 1 a 100 itens, sem produto repetido. Quantidade inteira de 1 a 1000000. Produtos são validados por HTTP. Nome, preço e total são calculados no servidor. requestId é opcional: reutilize-o com os mesmos itens para recuperar a mesma compra (200); com itens diferentes retorna 409. Novo pedido retorna 201. Produto inexistente: 404; serviço indisponível: 503.",
+                "body": {
+                  "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"itens\": [\n    {\n      \"produtoId\": \"{{produtoId}}\",\n      \"quantidade\": 2\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{pedidoId}}\",\n  \"valorTotal\": 25,\n  \"dataPedido\": \"2026-11-23T12:00:00.000Z\",\n  \"status\": \"REALIZADO\",\n  \"itens\": [\n    {\n      \"valorTotal\": 25,\n      \"nomeProduto\": \"Espresso da Casa\",\n      \"precoUnitario\": 12.5,\n      \"produtoId\": \"{{produtoId}}\",\n      \"quantidade\": 2,\n      \"pedidoId\": \"{{pedidoId}}\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar pedidos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{pedidosUrl}}/pedidos",
+            "description": "Lista as compras, com itens e snapshots históricos."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{pedidosUrl}}/pedidos",
+                "description": "Lista as compras, com itens e snapshots históricos."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"{{pedidoId}}\",\n    \"valorTotal\": 25,\n    \"dataPedido\": \"2026-11-23T12:00:00.000Z\",\n    \"status\": \"REALIZADO\",\n    \"itens\": [\n      {\n        \"valorTotal\": 25,\n        \"nomeProduto\": \"Espresso da Casa\",\n        \"precoUnitario\": 12.5,\n        \"produtoId\": \"{{produtoId}}\",\n        \"quantidade\": 2,\n        \"pedidoId\": \"{{pedidoId}}\"\n      }\n    ]\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Consultar pedido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{pedidosUrl}}/pedidos/{{pedidoId}}",
+            "description": "Informe o UUID retornado na criação. Retorna 404 se não existir."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{pedidosUrl}}/pedidos/{{pedidoId}}",
+                "description": "Informe o UUID retornado na criação. Retorna 404 se não existir."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{pedidoId}}\",\n  \"valorTotal\": 25,\n  \"dataPedido\": \"2026-11-23T12:00:00.000Z\",\n  \"status\": \"REALIZADO\",\n  \"itens\": [\n    {\n      \"valorTotal\": 25,\n      \"nomeProduto\": \"Espresso da Casa\",\n      \"precoUnitario\": 12.5,\n      \"produtoId\": \"{{produtoId}}\",\n      \"quantidade\": 2,\n      \"pedidoId\": \"{{pedidoId}}\"\n    }\n  ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Saúde do processo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{pedidosUrl}}/health",
+            "description": "Retorna 200 se o processo estiver ativo."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{pedidosUrl}}/health",
+                "description": "Retorna 200 se o processo estiver ativo."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"UP\",\n  \"service\": \"ms-pedidos\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Prontidão",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{pedidosUrl}}/ready",
+            "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{pedidosUrl}}/ready",
+                "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"READY\",\n  \"service\": \"ms-pedidos\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Avaliações - origem",
+      "item": [
+        {
+          "name": "Criar avaliação diretamente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{avaliacoesUrl}}/avaliacoes",
+            "description": "Rota direta, depende de ms-avaliacoes ativo e da validação do produto por HTTP. Nota inteira de 1 a 5 e comentário de 1 a 2000 caracteres após trim. UUID obrigatório. Sucesso: 201; inválido: 400; produto inexistente: 404; indisponibilidade: 503. O formulário do site usa a fila do Event Bus para aceitar envios durante quedas.",
+            "body": {
+              "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"nota\": 5,\n  \"comentario\": \"Café delicioso!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{avaliacoesUrl}}/avaliacoes",
+                "description": "Rota direta, depende de ms-avaliacoes ativo e da validação do produto por HTTP. Nota inteira de 1 a 5 e comentário de 1 a 2000 caracteres após trim. UUID obrigatório. Sucesso: 201; inválido: 400; produto inexistente: 404; indisponibilidade: 503. O formulário do site usa a fila do Event Bus para aceitar envios durante quedas.",
+                "body": {
+                  "raw": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"nota\": 5,\n  \"comentario\": \"Café delicioso!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{avaliacaoId}}\",\n  \"produtoId\": \"{{produtoId}}\",\n  \"nota\": 5,\n  \"comentario\": \"Café delicioso!\",\n  \"criadoEm\": \"2026-11-23T12:00:00.000Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Listar avaliações na origem",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{avaliacoesUrl}}/avaliacoes?produtoId={{produtoId}}",
+            "description": "produtoId obrigatório. Lista vazia se não houver avaliações."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{avaliacoesUrl}}/avaliacoes?produtoId={{produtoId}}",
+                "description": "produtoId obrigatório. Lista vazia se não houver avaliações."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"{{avaliacaoId}}\",\n    \"produtoId\": \"{{produtoId}}\",\n    \"nota\": 5,\n    \"comentario\": \"Café delicioso!\",\n    \"criadoEm\": \"2026-11-23T12:00:00.000Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Consultar média na origem",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{avaliacoesUrl}}/avaliacoes/media/{{produtoId}}",
+            "description": "Sem avaliações: media null e total 0. A média é arredondada a duas casas."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{avaliacoesUrl}}/avaliacoes/media/{{produtoId}}",
+                "description": "Sem avaliações: media null e total 0. A média é arredondada a duas casas."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"total\": 1,\n  \"media\": 5\n}"
+            }
+          ]
+        },
+        {
+          "name": "Saúde do processo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{avaliacoesUrl}}/health",
+            "description": "Retorna 200 se o processo estiver ativo."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{avaliacoesUrl}}/health",
+                "description": "Retorna 200 se o processo estiver ativo."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"UP\",\n  \"service\": \"ms-avaliacoes\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Prontidão",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{avaliacoesUrl}}/ready",
+            "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{avaliacoesUrl}}/ready",
+                "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"READY\",\n  \"service\": \"ms-avaliacoes\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04 - Query - leitura do frontend",
+      "item": [
+        {
+          "name": "Listar avaliações na consulta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{queryUrl}}/avaliacoes?produtoId={{produtoId}}",
+            "description": "Leitura usada pelo frontend. Consulta a projeção persistente, mesmo com ms-avaliacoes parado. Propagação eventual pelo Event Bus."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{queryUrl}}/avaliacoes?produtoId={{produtoId}}",
+                "description": "Leitura usada pelo frontend. Consulta a projeção persistente, mesmo com ms-avaliacoes parado. Propagação eventual pelo Event Bus."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"{{avaliacaoId}}\",\n    \"produtoId\": \"{{produtoId}}\",\n    \"nota\": 5,\n    \"comentario\": \"Café delicioso!\",\n    \"criadoEm\": \"2026-11-23T12:00:00.000Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Consultar média na consulta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{queryUrl}}/avaliacoes/media/{{produtoId}}",
+            "description": "Apenas avaliações processadas entram na média. Pendências não são contadas. Sem avaliações: media null, total 0."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{queryUrl}}/avaliacoes/media/{{produtoId}}",
+                "description": "Apenas avaliações processadas entram na média. Pendências não são contadas. Sem avaliações: media null, total 0."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"produtoId\": \"{{produtoId}}\",\n  \"total\": 1,\n  \"media\": 5\n}"
+            }
+          ]
+        },
+        {
+          "name": "Saúde do processo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{queryUrl}}/health",
+            "description": "Retorna 200 se o processo estiver ativo."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{queryUrl}}/health",
+                "description": "Retorna 200 se o processo estiver ativo."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"UP\",\n  \"service\": \"ms-query\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Prontidão",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{queryUrl}}/ready",
+            "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{queryUrl}}/ready",
+                "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"READY\",\n  \"service\": \"ms-query\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05 - Event Bus - fila e eventos",
+      "item": [
+        {
+          "name": "Enviar avaliação para a fila",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/review-requests",
+            "description": "Envio usado pelo frontend. Persiste a solicitação e retorna 202, mesmo com ms-avaliacoes parado. requestId deve ser UUID estável: reenvio igual recupera a mesma solicitação, conteúdo diferente retorna 409. A existência do produto é validada depois pelo consumidor. Quando processada, a avaliação usa o mesmo ID da solicitação.",
+            "body": {
+              "raw": "{\n  \"requestId\": \"{{solicitacaoId}}\",\n  \"produtoId\": \"{{produtoId}}\",\n  \"nota\": 5,\n  \"comentario\": \"Café delicioso!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "202 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/review-requests",
+                "description": "Envio usado pelo frontend. Persiste a solicitação e retorna 202, mesmo com ms-avaliacoes parado. requestId deve ser UUID estável: reenvio igual recupera a mesma solicitação, conteúdo diferente retorna 409. A existência do produto é validada depois pelo consumidor. Quando processada, a avaliação usa o mesmo ID da solicitação.",
+                "body": {
+                  "raw": "{\n  \"requestId\": \"{{solicitacaoId}}\",\n  \"produtoId\": \"{{produtoId}}\",\n  \"nota\": 5,\n  \"comentario\": \"Café delicioso!\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "Accepted",
+              "code": 202,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{solicitacaoId}}\",\n  \"produtoId\": \"{{produtoId}}\",\n  \"nota\": 5,\n  \"comentario\": \"Café delicioso!\",\n  \"criadoEm\": \"2026-11-23T12:00:00.000Z\",\n  \"status\": \"PENDENTE\",\n  \"motivo\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar solicitações por produto",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/review-requests?produtoId={{produtoId}}&limit=100",
+            "description": "Lista solicitações no servidor. Estados: PENDENTE, PROCESSADA ou REJEITADA (com motivo). A pendência pode ser vista de outro computador."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/review-requests?produtoId={{produtoId}}&limit=100",
+                "description": "Lista solicitações no servidor. Estados: PENDENTE, PROCESSADA ou REJEITADA (com motivo). A pendência pode ser vista de outro computador."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"{{solicitacaoId}}\",\n    \"produtoId\": \"{{produtoId}}\",\n    \"nota\": 5,\n    \"comentario\": \"Café delicioso!\",\n    \"criadoEm\": \"2026-11-23T12:00:00.000Z\",\n    \"status\": \"PENDENTE\",\n    \"motivo\": null\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Consultar fila pendente - interno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/review-requests?status=PENDENTE&limit=100",
+            "description": "Consumidor lê por ordem de chegada. Limite entre 1 e 500."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/review-requests?status=PENDENTE&limit=100",
+                "description": "Consumidor lê por ordem de chegada. Limite entre 1 e 500."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"{{solicitacaoId}}\",\n    \"produtoId\": \"{{produtoId}}\",\n    \"nota\": 5,\n    \"comentario\": \"Café delicioso!\",\n    \"criadoEm\": \"2026-11-23T12:00:00.000Z\",\n    \"status\": \"PENDENTE\",\n    \"motivo\": null\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Confirmar processamento - interno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/review-requests/{{solicitacaoId}}/ack",
+            "description": "Uso interno do consumidor, após persistir avaliação e outbox. Retorna 404 se não existir ou 409 se já estiver finalizada com outro estado.",
+            "body": {
+              "raw": "{\n  \"status\": \"PROCESSADA\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/review-requests/{{solicitacaoId}}/ack",
+                "description": "Uso interno do consumidor, após persistir avaliação e outbox. Retorna 404 se não existir ou 409 se já estiver finalizada com outro estado.",
+                "body": {
+                  "raw": "{\n  \"status\": \"PROCESSADA\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"PROCESSADA\",\n  \"id\": \"{{solicitacaoId}}\",\n  \"motivo\": null\n}"
+            }
+          ]
+        },
+        {
+          "name": "Confirmar rejeição - interno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/review-requests/{{solicitacaoId}}/ack",
+            "description": "Uso interno do consumidor. motivo é obrigatório para rejeição e aceita até 1000 caracteres.",
+            "body": {
+              "raw": "{\n  \"status\": \"REJEITADA\",\n  \"motivo\": \"Produto não encontrado no catálogo.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/review-requests/{{solicitacaoId}}/ack",
+                "description": "Uso interno do consumidor. motivo é obrigatório para rejeição e aceita até 1000 caracteres.",
+                "body": {
+                  "raw": "{\n  \"status\": \"REJEITADA\",\n  \"motivo\": \"Produto não encontrado no catálogo.\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"REJEITADA\",\n  \"id\": \"{{solicitacaoId}}\",\n  \"motivo\": \"Produto não encontrado no catálogo.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Publicar evento - interno",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/events",
+            "description": "Uso interno do publicador da outbox. id deve coincidir com data.id. Reenvio igual não duplica; conteúdo diferente com o mesmo ID retorna 409. Tipo aceito: AvaliacaoCriada. Persistência antes da resposta.",
+            "body": {
+              "raw": "{\n  \"data\": {\n    \"id\": \"{{avaliacaoId}}\",\n    \"produtoId\": \"{{produtoId}}\",\n    \"nota\": 5,\n    \"comentario\": \"Café delicioso!\",\n    \"criadoEm\": \"2026-11-23T12:00:00.000Z\"\n  },\n  \"id\": \"{{avaliacaoId}}\",\n  \"type\": \"AvaliacaoCriada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "mode": "raw"
+            }
+          },
+          "response": [
+            {
+              "name": "201 - Exemplo",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/events",
+                "description": "Uso interno do publicador da outbox. id deve coincidir com data.id. Reenvio igual não duplica; conteúdo diferente com o mesmo ID retorna 409. Tipo aceito: AvaliacaoCriada. Persistência antes da resposta.",
+                "body": {
+                  "raw": "{\n  \"data\": {\n    \"id\": \"{{avaliacaoId}}\",\n    \"produtoId\": \"{{produtoId}}\",\n    \"nota\": 5,\n    \"comentario\": \"Café delicioso!\",\n    \"criadoEm\": \"2026-11-23T12:00:00.000Z\"\n  },\n  \"id\": \"{{avaliacaoId}}\",\n  \"type\": \"AvaliacaoCriada\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  },
+                  "mode": "raw"
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"{{avaliacaoId}}\",\n  \"sequencia\": \"1\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Consultar histórico para replay - interno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/events?after=0&limit=100",
+            "description": "Eventos em ordem crescente. after é cursor numérico (string), limit entre 1 e 500. O Query avança o checkpoint após aplicar a projeção."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/events?after=0&limit=100",
+                "description": "Eventos em ordem crescente. after é cursor numérico (string), limit entre 1 e 500. O Query avança o checkpoint após aplicar a projeção."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"events\": [\n    {\n      \"sequencia\": \"1\",\n      \"data\": {\n        \"id\": \"{{avaliacaoId}}\",\n        \"produtoId\": \"{{produtoId}}\",\n        \"nota\": 5,\n        \"comentario\": \"Café delicioso!\",\n        \"criadoEm\": \"2026-11-23T12:00:00.000Z\"\n      },\n      \"id\": \"{{avaliacaoId}}\",\n      \"type\": \"AvaliacaoCriada\"\n    }\n  ],\n  \"next\": \"1\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Saúde do processo",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/health",
+            "description": "Retorna 200 se o processo estiver ativo."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/health",
+                "description": "Retorna 200 se o processo estiver ativo."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"UP\",\n  \"service\": \"event-bus\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Prontidão",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{eventBusUrl}}/ready",
+            "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+          },
+          "response": [
+            {
+              "name": "200 - Exemplo",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "url": "{{eventBusUrl}}/ready",
+                "description": "Retorna 200 quando pronto ou 503 se banco, migrations ou sincronização inicial ainda não estiverem prontos."
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"status\": \"READY\",\n  \"service\": \"event-bus\"\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
